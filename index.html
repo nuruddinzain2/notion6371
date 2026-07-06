@@ -6,7 +6,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#22c55e">
+  <meta name="theme-color" content="#ffffff">
   <title>Dashboard</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -17,10 +17,13 @@
       overflow: hidden;
       background: #fff;
       overscroll-behavior: none;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      -webkit-overflow-scrolling: touch;
     }
 
-    body { position: fixed; inset: 0; }
+    body {
+      position: fixed;
+      inset: 0;
+    }
 
     iframe {
       height: 100vh;
@@ -28,15 +31,16 @@
       height: 100dvh;
       width: 100dvw;
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
       border: none;
       display: block;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right)
-               env(safe-area-inset-bottom) env(safe-area-inset-left);
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
-    /* Loading */
-    .overlay {
+    .loading-overlay {
       position: fixed;
       inset: 0;
       background: #fff;
@@ -45,179 +49,80 @@
       align-items: center;
       justify-content: center;
       z-index: 9999;
-      transition: opacity .4s;
-      padding: 20px;
-      text-align: center;
+      transition: opacity 0.5s ease;
     }
-    .overlay.hidden { opacity: 0; pointer-events: none; }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
 
     .spinner {
-      width: 48px; height: 48px;
-      border: 4px solid #e5e7eb;
-      border-top-color: #22c55e;
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #22c55e;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-bottom: 16px;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .overlay h2 {
-      font-size: 18px;
-      color: #111827;
-      margin-bottom: 8px;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    .overlay p {
-      font-size: 13px;
+
+    .loading-text {
       color: #6b7280;
-      max-width: 360px;
-      line-height: 1.5;
-      margin-bottom: 20px;
-    }
-
-    /* Tombol buka dashboard */
-    .btn-open {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #22c55e;
-      color: #fff;
-      padding: 12px 24px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-weight: 600;
       font-size: 14px;
-      box-shadow: 0 4px 12px rgba(34,197,94,.3);
-      transition: transform .15s, background .2s;
-    }
-    .btn-open:hover { background: #16a34a; transform: translateY(-1px); }
-    .btn-open:active { transform: translateY(0); }
-
-    .btn-secondary {
-      background: transparent;
-      color: #22c55e;
-      border: 1.5px solid #22c55e;
-      box-shadow: none;
-      margin-top: 10px;
-    }
-    .btn-secondary:hover { background: #f0fdf4; }
-
-    .countdown {
-      font-size: 12px;
-      color: #9ca3af;
-      margin-top: 14px;
+      font-family: 'Segoe UI', Arial, sans-serif;
     }
 
     @media screen and (orientation: landscape) and (max-height: 500px) {
-      .overlay { flex-direction: row; gap: 20px; padding: 10px 20px; }
-      .overlay .text-side { text-align: left; }
-      .spinner { margin-bottom: 0; }
+      iframe {
+        height: 100dvh;
+        width: 100dvw;
+      }
     }
   </style>
 </head>
 <body>
-
-  <div class="overlay" id="overlay">
-    <div class="spinner" id="spinner"></div>
-    <div class="text-side">
-      <h2 id="overlayTitle">Memuat Dashboard...</h2>
-      <p id="overlayText">Mohon tunggu sebentar.</p>
-      <a id="btnOpen" class="btn-open" href="#" target="_blank" style="display:none;">
-        🚀 Buka Dashboard
-      </a>
-      <a id="btnOpen2" class="btn-open btn-secondary" href="#" target="_blank" style="display:none;">
-        ↗ Buka di Tab Baru
-      </a>
-      <div class="countdown" id="countdown" style="display:none;"></div>
-    </div>
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Memuat dashboard...</div>
   </div>
 
   <iframe
     id="dashboardFrame"
     src="https://script.google.com/macros/s/AKfycbyE36-M301GBgZgQL54EoPHV6XKk70NY4CWBedTDKdZeTr8dtkOb1oPhEXB6g2WadFn/exec"
     allow="fullscreen; accelerometer; gyroscope; autoplay"
-    allowfullscreen>
+    allowfullscreen
+    scrolling="auto">
   </iframe>
 
   <script>
-    const APPS_URL = 'https://script.google.com/macros/s/AKfycbyE36-M301GBgZgQL54EoPHV6XKk70NY4CWBedTDKdZeTr8dtkOb1oPhEXB6g2WadFn/exec';
+    const overlay = document.getElementById('loadingOverlay');
+    const frame = document.getElementById('dashboardFrame');
 
-    const overlay      = document.getElementById('overlay');
-    const spinner      = document.getElementById('spinner');
-    const title        = document.getElementById('overlayTitle');
-    const text         = document.getElementById('overlayText');
-    const btnOpen      = document.getElementById('btnOpen');
-    const btnOpen2     = document.getElementById('btnOpen2');
-    const countdownEl  = document.getElementById('countdown');
-    const frame        = document.getElementById('dashboardFrame');
-
-    let loaded = false;
-
-    // Set URL tombol
-    btnOpen.href = APPS_URL;
-    btnOpen2.href = APPS_URL;
-
-    // Saat iframe berhasil load
-    frame.addEventListener('load', function () {
-      loaded = true;
-      overlay.classList.add('hidden');
+    frame.addEventListener('load', function() {
+      setTimeout(function() {
+        overlay.classList.add('hidden');
+      }, 500);
     });
 
-    // Deteksi error: coba fetch URL untuk cek apakah bisa diakses
-    // Jika fetch gagal (CORS/refused), tampilkan tombol buka
-    function checkConnection() {
-      fetch(APPS_URL, { method: 'HEAD', mode: 'no-cors' })
-        .then(() => {
-          // no-cors selalu resolve, jadi kita pakai timeout sebagai fallback
-        })
-        .catch(() => {
-          showFallback('Koneksi Gagal',
-            'Tidak dapat terhubung ke server dashboard. Periksa koneksi internet Anda.');
-        });
-    }
+    setTimeout(function() {
+      overlay.classList.add('hidden');
+    }, 3000);
 
-    function showFallback(t, p) {
-      spinner.style.display = 'none';
-      title.textContent = t || 'Dashboard Tidak Dapat Dimuat';
-      text.textContent = p || 'Google Apps Script memblokir tampilan di dalam halaman ini. Silakan buka dashboard di tab baru.';
-      btnOpen.style.display = 'inline-flex';
-      btnOpen2.style.display = 'inline-flex';
-    }
-
-    // Timeout 6 detik — jika iframe belum load, asumsikan diblokir
-    setTimeout(function () {
-      if (!loaded) {
-        showFallback();
-      }
-    }, 6000);
-
-    // Auto-open di tab baru setelah 10 detik (opsional — user bisa klik manual)
-    let countdown = 10;
-    const countdownInterval = setInterval(function () {
-      if (loaded) { clearInterval(countdownInterval); return; }
-      countdown--;
-      if (countdown > 0) {
-        countdownEl.style.display = 'block';
-        countdownEl.textContent = 'Otomatis membuka dalam ' + countdown + ' detik...';
-      } else {
-        clearInterval(countdownInterval);
-        countdownEl.style.display = 'none';
-        // Auto buka di tab baru (hanya jika user sudah pernah interact)
-        // Karena browser modern blokir auto-popup, kita biarkan user klik manual
-      }
-    }, 1000);
-
-    // Fix viewport iOS
     function setViewportHeight() {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', vh + 'px');
     }
     setViewportHeight();
     window.addEventListener('resize', setViewportHeight);
-    window.addEventListener('orientationchange', function () {
+    window.addEventListener('orientationchange', function() {
       setTimeout(setViewportHeight, 200);
     });
-
-    checkConnection();
   </script>
 </body>
 </html>
